@@ -1,6 +1,5 @@
 package com.example.mobapp
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -8,7 +7,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
@@ -35,8 +33,8 @@ import androidx.core.app.NotificationCompat
 class ScreenTimeService : Service() {
 
     companion object {
-        const val ONGOING_CHANNEL = "screen_time_ongoing"
-        const val ALERT_CHANNEL = "screen_time_alert"
+        const val ONGOING_CHANNEL = NotifChannels.SCREEN_ONGOING
+        const val ALERT_CHANNEL = NotifChannels.SCREEN_ALERT
         const val ONGOING_NOTIF_ID = 1
         const val ALERT_NOTIF_ID = 2
         const val ACTION_RELOAD = "com.example.mobapp.ACTION_RELOAD"
@@ -56,7 +54,7 @@ class ScreenTimeService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        createChannels()
+        NotifChannels.ensureAll(this)
         startForeground(ONGOING_NOTIF_ID, buildOngoingNotification())
 
         val filter = IntentFilter().apply {
@@ -184,33 +182,4 @@ class ScreenTimeService : Service() {
         )
     }
 
-    private fun createChannels() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        val ongoing = NotificationChannel(
-            ONGOING_CHANNEL,
-            "Screen-time tracker",
-            NotificationManager.IMPORTANCE_LOW
-        )
-        nm.createNotificationChannel(ongoing)
-
-        val alert = NotificationChannel(
-            ALERT_CHANNEL,
-            "Usage alerts",
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = "Alerts you after the configured period of continuous screen use."
-            enableVibration(true)
-            vibrationPattern = longArrayOf(0, 500, 250, 500, 250, 500)
-            setSound(
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-            )
-        }
-        nm.createNotificationChannel(alert)
-    }
 }

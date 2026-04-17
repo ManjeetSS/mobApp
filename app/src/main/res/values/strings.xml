@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Usage Reminder</string>
+
+    <!-- Tabs -->
+    <string name="tab_screen">Screen</string>
+    <string name="tab_water">Water</string>
+    <string name="tab_habits">Habits</string>
+
+    <!-- Screen-time screen -->
+    <string name="screen_title">Screen-time reminder</string>
     <string name="enable_label">Enable reminder</string>
     <string name="threshold_label">Alert me after</string>
     <string name="threshold_hint">18</string>
@@ -22,4 +30,37 @@
         <item quantity="one">%d hour</item>
         <item quantity="other">%d hours</item>
     </plurals>
+
+    <!-- Water screen -->
+    <string name="water_title">Drink-water reminder</string>
+    <string name="water_interval_label">Remind me every (minutes)</string>
+    <string name="water_interval_hint">60</string>
+    <string name="water_enable">Remind me to drink water</string>
+    <string name="water_next">Next reminder around %1$s.</string>
+    <string name="water_off">Reminder off.</string>
+    <string name="water_today">Today</string>
+    <string name="water_intake_format">%1$d glasses · %2$d ml</string>
+    <string name="water_glass_button">I drank a glass (250 ml)</string>
+    <string name="water_custom_hint">ml</string>
+    <string name="water_log_custom">Log</string>
+    <string name="water_notif_title">Time to drink water</string>
+    <string name="water_notif_text">Stay hydrated — you haven\'t logged water in %1$d minutes.</string>
+    <string name="water_notif_action">I drank it</string>
+
+    <!-- Habits screen -->
+    <string name="habits_empty">No habits yet. Tap + to add one.</string>
+    <string name="habits_add">Add habit</string>
+    <string name="habit_name_hint">Habit name (e.g. Stretch)</string>
+    <string name="habit_interval_hint">Every how many minutes?</string>
+    <string name="habit_interval_fmt">Every %1$d min</string>
+    <string name="habit_done">Done</string>
+    <string name="habit_delete">Delete</string>
+    <string name="habit_last_done_never">Not yet completed.</string>
+    <string name="habit_last_done_at">Last done: %1$s</string>
+    <string name="habit_invalid">Please enter a name and an interval of 1 or more minutes.</string>
+    <string name="habit_notif_title">Habit reminder: %1$s</string>
+    <string name="habit_notif_text">Did you complete this habit?</string>
+    <string name="habit_notif_action">Mark done</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
 </resources>

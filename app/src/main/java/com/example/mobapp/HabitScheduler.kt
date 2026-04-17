@@ -1,0 +1,34 @@
+package com.example.mobapp
+
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+
+/** AlarmManager-backed scheduling for individual habits. Habit ID doubles as request code. */
+object HabitScheduler {
+
+    fun schedule(ctx: Context, habit: Habit) {
+        if (!habit.enabled) return
+        val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val triggerAt = System.currentTimeMillis() + habit.intervalMinutes.toLong() * 60L * 1000L
+        am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, reminderPi(ctx, habit.id))
+    }
+
+    fun cancel(ctx: Context, habitId: Int) {
+        val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        am.cancel(reminderPi(ctx, habitId))
+    }
+
+    fun reminderPi(ctx: Context, habitId: Int): PendingIntent {
+        val i = Intent(ctx, HabitReminderReceiver::class.java).apply {
+            action = HabitReminderReceiver.ACTION_FIRE
+            `package` = ctx.packageName
+            putExtra(HabitReminderReceiver.EXTRA_HABIT_ID, habitId)
+        }
+        return PendingIntent.getBroadcast(
+            ctx, habitId, i,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+}
