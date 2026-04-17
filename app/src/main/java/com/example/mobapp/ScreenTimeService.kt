@@ -23,26 +23,26 @@ import androidx.core.app.NotificationCompat
 
 /**
  * Foreground service that tracks continuous screen-on time and posts an alert
- * after the configured threshold (18 minutes) elapses while the screen is on.
+ * after the user-configured threshold (see [Prefs.getThresholdMs]) elapses while
+ * the screen is on.
  *
  * Behavior:
- *  - On ACTION_SCREEN_ON: schedule an alert in [THRESHOLD_MS].
+ *  - On ACTION_SCREEN_ON: schedule an alert in [Prefs.getThresholdMs].
  *  - On ACTION_SCREEN_OFF: cancel any pending alert (timer resets).
+ *  - When the main activity changes the threshold, it sends [ACTION_RELOAD] so
+ *    the service re-reads prefs and resets the timer immediately.
  */
 class ScreenTimeService : Service() {
 
     companion object {
-        // For quick manual testing, set BuildConfig.DEBUG path or just change this to e.g. 30_000L.
-        const val THRESHOLD_MS: Long = 18L * 60L * 1000L
         const val ONGOING_CHANNEL = "screen_time_ongoing"
         const val ALERT_CHANNEL = "screen_time_alert"
         const val ONGOING_NOTIF_ID = 1
         const val ALERT_NOTIF_ID = 2
+        const val ACTION_RELOAD = "com.example.mobapp.ACTION_RELOAD"
     }
 
     private val handler = Handler(Looper.getMainLooper())
-    private var screenOnSinceMs: Long = 0L
-
     private val alertRunnable = Runnable { fireAlert() }
 
     private val screenReceiver = object : BroadcastReceiver() {
@@ -65,12 +65,14 @@ class ScreenTimeService : Service() {
         }
         registerReceiver(screenReceiver, filter)
 
-        // If the screen is already on when the service starts, begin the timer immediately.
-        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-        if (pm.isInteractive) startTimer()
+        if (isScreenOn()) startTimer()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_RELOAD && isScreenOn()) {
+            // Threshold changed — reset the timer with the new value.
+            startTimer()
+        }
         return START_STICKY
     }
 
@@ -82,15 +84,18 @@ class ScreenTimeService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    private fun isScreenOn(): Boolean {
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        return pm.isInteractive
+    }
+
     private fun startTimer() {
-        screenOnSinceMs = System.currentTimeMillis()
         handler.removeCallbacks(alertRunnable)
-        handler.postDelayed(alertRunnable, THRESHOLD_MS)
+        handler.postDelayed(alertRunnable, Prefs.getThresholdMs(this))
     }
 
     private fun cancelTimer() {
         handler.removeCallbacks(alertRunnable)
-        screenOnSinceMs = 0L
     }
 
     private fun fireAlert() {
@@ -107,10 +112,12 @@ class ScreenTimeService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val durationText = DurationFormat.format(this, Prefs.getThresholdValue(this), Prefs.getThresholdUnit(this))
+
         val notif = NotificationCompat.Builder(this, ALERT_CHANNEL)
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
             .setContentTitle(getString(R.string.alert_title))
-            .setContentText(getString(R.string.alert_text))
+            .setContentText(getString(R.string.alert_text, durationText))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
@@ -125,7 +132,6 @@ class ScreenTimeService : Service() {
             .build()
 
         nm.notify(ALERT_NOTIF_ID, notif)
-
         vibrate()
     }
 
@@ -194,7 +200,7 @@ class ScreenTimeService : Service() {
             "Usage alerts",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Alerts you after 18 minutes of continuous screen use."
+            description = "Alerts you after the configured period of continuous screen use."
             enableVibration(true)
             vibrationPattern = longArrayOf(0, 500, 250, 500, 250, 500)
             setSound(

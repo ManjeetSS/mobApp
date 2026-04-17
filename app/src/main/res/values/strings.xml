@@ -1,12 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Usage Reminder</string>
-    <string name="enable_label">Enable 18-minute reminder</string>
-    <string name="status_running">Monitoring… will alert after 18 min of continuous use.</string>
+    <string name="enable_label">Enable reminder</string>
+    <string name="threshold_label">Alert me after</string>
+    <string name="threshold_hint">18</string>
+    <string name="unit_minutes">Minutes</string>
+    <string name="unit_hours">Hours</string>
+    <string name="status_running">Monitoring… will alert after %1$s of continuous use.</string>
     <string name="status_stopped">Monitoring is off.</string>
     <string name="ongoing_title">Usage Reminder is running</string>
     <string name="ongoing_text">Tracking continuous screen-on time.</string>
     <string name="alert_title">Time to take a break</string>
-    <string name="alert_text">You\'ve been using your phone for 18 minutes straight.</string>
+    <string name="alert_text">You\'ve been using your phone for %1$s straight.</string>
     <string name="turn_off">Turn off</string>
+    <string name="invalid_threshold">Enter a number of 1 or more</string>
+    <plurals name="duration_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <plurals name="duration_hours">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
 </resources>
