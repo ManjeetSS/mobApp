@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.MobApp" parent="Theme.Material3.DynamicColors.DayNight">
+    <!--
+        Use the standard Material3 DayNight theme and let DynamicColors.applyToActivitiesIfAvailable
+        (called in MobAppApplication) opt into Material You on Android 12+. The DynamicColors.*
+        theme variants aren't universally available across every Material release, so this is the
+        safer pattern.
+    -->
+    <style name="Theme.MobApp" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:navigationBarColor">?attr/colorSurface</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
     </style>
 </resources>
