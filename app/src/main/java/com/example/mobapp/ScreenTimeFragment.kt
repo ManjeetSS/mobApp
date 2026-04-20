@@ -1,5 +1,6 @@
 package com.example.mobapp
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
@@ -8,8 +9,11 @@ import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.switchmaterial.SwitchMaterial
 
@@ -19,16 +23,33 @@ class ScreenTimeFragment : Fragment(R.layout.fragment_screen_time) {
     private lateinit var status: TextView
     private lateinit var thresholdValue: EditText
     private lateinit var unitToggle: MaterialButtonToggleGroup
+    private lateinit var soundName: TextView
+    private lateinit var pickSound: MaterialButton
     private var suppressListeners = false
+
+    private lateinit var soundPickerLauncher: ActivityResultLauncher<Intent>
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val ctx = requireContext()
+        NotifChannels.ensureAll(ctx)
 
         status = view.findViewById(R.id.status)
         enabledSwitch = view.findViewById(R.id.enabledSwitch)
         thresholdValue = view.findViewById(R.id.thresholdValue)
         unitToggle = view.findViewById(R.id.unitToggle)
+        soundName = view.findViewById(R.id.screenSoundName)
+        pickSound = view.findViewById(R.id.screenPickSound)
+
+        soundPickerLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+            val picked = SoundPicker.extractPickedUri(result.data)
+            Prefs.setSoundUri(ctx, picked)
+            NotifChannels.recreateScreenAlertChannel(ctx)
+            refreshSoundLabel()
+        }
 
         enabledSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (suppressListeners) return@setOnCheckedChangeListener
@@ -64,6 +85,15 @@ class ScreenTimeFragment : Fragment(R.layout.fragment_screen_time) {
         unitToggle.addOnButtonCheckedListener { _, _, isChecked ->
             if (!suppressListeners && isChecked) onThresholdChanged()
         }
+
+        pickSound.setOnClickListener {
+            val intent = SoundPicker.buildIntent(
+                ctx,
+                Prefs.getSoundUri(ctx),
+                getString(R.string.picker_title_screen)
+            )
+            soundPickerLauncher.launch(intent)
+        }
     }
 
     override fun onResume() {
@@ -79,6 +109,7 @@ class ScreenTimeFragment : Fragment(R.layout.fragment_screen_time) {
 
         suppressListeners = false
         refreshStatus()
+        refreshSoundLabel()
     }
 
     private fun onThresholdChanged() {
@@ -113,5 +144,10 @@ class ScreenTimeFragment : Fragment(R.layout.fragment_screen_time) {
         } else {
             status.setText(R.string.status_stopped)
         }
+    }
+
+    private fun refreshSoundLabel() {
+        val ctx = requireContext()
+        soundName.text = SoundPicker.displayName(ctx, Prefs.getSoundUri(ctx))
     }
 }

@@ -99,7 +99,8 @@ class ScreenTimeService : Service() {
     private fun fireAlert() {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        val alertSound: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        val alertSound: Uri = Prefs.getSoundUri(this)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
         val tapIntent = Intent(this, MainActivity::class.java).apply {

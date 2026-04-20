@@ -12,8 +12,7 @@ import java.util.Date
 
 class HabitsAdapter(
     private val onToggle: (Habit, Boolean) -> Unit,
-    private val onDone: (Habit) -> Unit,
-    private val onDelete: (Habit) -> Unit
+    private val onDone: (Habit) -> Unit
 ) : RecyclerView.Adapter<HabitsAdapter.VH>() {
 
     private var items: List<Habit> = emptyList()
@@ -22,6 +21,8 @@ class HabitsAdapter(
         items = list
         notifyDataSetChanged()
     }
+
+    fun itemAt(position: Int): Habit = items[position]
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_habit, parent, false)
@@ -38,7 +39,6 @@ class HabitsAdapter(
         private val lastDone: TextView = v.findViewById(R.id.habitLastDone)
         private val enable: SwitchMaterial = v.findViewById(R.id.habitEnableSwitch)
         private val doneBtn: MaterialButton = v.findViewById(R.id.habitDoneButton)
-        private val deleteBtn: MaterialButton = v.findViewById(R.id.habitDeleteButton)
 
         fun bind(h: Habit) {
             name.text = h.name
@@ -56,7 +56,6 @@ class HabitsAdapter(
             enable.setOnCheckedChangeListener { _, checked -> onToggle(h, checked) }
 
             doneBtn.setOnClickListener { onDone(h) }
-            deleteBtn.setOnClickListener { onDelete(h) }
         }
     }
 }

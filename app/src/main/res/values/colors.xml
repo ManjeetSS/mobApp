@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand palette (used as fallback when dynamic colors are unavailable). -->
+    <color name="brand_indigo">#3F51B5</color>
+    <color name="brand_water">#0EA5E9</color>
+    <color name="brand_habits">#10B981</color>
+    <color name="ic_launcher_background">#0EA5E9</color>
+    <color name="swipe_red">#E53935</color>
+</resources>

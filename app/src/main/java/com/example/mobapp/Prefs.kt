@@ -1,13 +1,15 @@
 package com.example.mobapp
 
 import android.content.Context
+import android.net.Uri
 
-/** SharedPreferences wrapper for the enabled flag and the user-configured threshold. */
+/** Screen-time settings. */
 object Prefs {
     private const val FILE = "mobapp_prefs"
     private const val KEY_ENABLED = "enabled"
     private const val KEY_VALUE = "threshold_value"
     private const val KEY_UNIT = "threshold_unit"
+    private const val KEY_SOUND_URI = "alert_sound_uri"
 
     const val UNIT_MINUTES = "MINUTES"
     const val UNIT_HOURS = "HOURS"
@@ -18,9 +20,7 @@ object Prefs {
     private fun prefs(ctx: Context) =
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
-    fun isEnabled(ctx: Context): Boolean =
-        prefs(ctx).getBoolean(KEY_ENABLED, false)
-
+    fun isEnabled(ctx: Context): Boolean = prefs(ctx).getBoolean(KEY_ENABLED, false)
     fun setEnabled(ctx: Context, value: Boolean) {
         prefs(ctx).edit().putBoolean(KEY_ENABLED, value).apply()
     }
@@ -38,12 +38,19 @@ object Prefs {
             .apply()
     }
 
-    /** Canonical threshold in milliseconds, derived from value + unit. */
     fun getThresholdMs(ctx: Context): Long {
         val v = getThresholdValue(ctx).toLong()
         return when (getThresholdUnit(ctx)) {
             UNIT_HOURS -> v * 60L * 60L * 1000L
             else -> v * 60L * 1000L
         }
+    }
+
+    /** Custom alert sound URI (null = system default alarm). */
+    fun getSoundUri(ctx: Context): Uri? =
+        prefs(ctx).getString(KEY_SOUND_URI, null)?.let(Uri::parse)
+
+    fun setSoundUri(ctx: Context, uri: Uri?) {
+        prefs(ctx).edit().putString(KEY_SOUND_URI, uri?.toString()).apply()
     }
 }

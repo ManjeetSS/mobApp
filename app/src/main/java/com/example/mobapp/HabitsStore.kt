@@ -34,6 +34,14 @@ object HabitsStore {
         saveAll(ctx, getAll(ctx).filter { it.id != id })
     }
 
+    /** Re-insert a previously removed habit at [position], preserving its id — used by undo. */
+    fun insertAt(ctx: Context, habit: Habit, position: Int) {
+        val current = getAll(ctx).filter { it.id != habit.id }.toMutableList()
+        val idx = position.coerceIn(0, current.size)
+        current.add(idx, habit)
+        saveAll(ctx, current)
+    }
+
     fun update(ctx: Context, habit: Habit) {
         saveAll(ctx, getAll(ctx).map { if (it.id == habit.id) habit else it })
     }

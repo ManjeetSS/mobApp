@@ -1,28 +1,41 @@
 package com.example.mobapp
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.text.format.DateFormat
 import android.view.View
-import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.switchmaterial.SwitchMaterial
 import java.util.Date
 
 class WaterFragment : Fragment(R.layout.fragment_water) {
 
     private lateinit var interval: EditText
+    private lateinit var goal: EditText
     private lateinit var enableSwitch: SwitchMaterial
     private lateinit var status: TextView
-    private lateinit var intake: TextView
-    private lateinit var glassButton: Button
+    private lateinit var heroMl: TextView
+    private lateinit var heroGlasses: TextView
+    private lateinit var goalSummary: TextView
+    private lateinit var progress: LinearProgressIndicator
+    private lateinit var glassButton: MaterialButton
     private lateinit var customMl: EditText
-    private lateinit var logCustomButton: Button
+    private lateinit var logCustomButton: MaterialButton
+    private lateinit var soundName: TextView
+    private lateinit var pickSound: MaterialButton
     private var suppressListeners = false
+
+    private lateinit var soundPickerLauncher: ActivityResultLauncher<Intent>
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -30,12 +43,28 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
         NotifChannels.ensureAll(ctx)
 
         interval = view.findViewById(R.id.waterInterval)
+        goal = view.findViewById(R.id.waterGoal)
         enableSwitch = view.findViewById(R.id.waterEnableSwitch)
         status = view.findViewById(R.id.waterStatus)
-        intake = view.findViewById(R.id.waterIntake)
+        heroMl = view.findViewById(R.id.waterHeroMl)
+        heroGlasses = view.findViewById(R.id.waterHeroGlasses)
+        goalSummary = view.findViewById(R.id.waterGoalSummary)
+        progress = view.findViewById(R.id.waterProgress)
         glassButton = view.findViewById(R.id.waterGlassButton)
         customMl = view.findViewById(R.id.waterCustomMl)
         logCustomButton = view.findViewById(R.id.waterLogCustom)
+        soundName = view.findViewById(R.id.waterSoundName)
+        pickSound = view.findViewById(R.id.waterPickSound)
+
+        soundPickerLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+            val picked = SoundPicker.extractPickedUri(result.data)
+            WaterPrefs.setSoundUri(ctx, picked)
+            NotifChannels.recreateWaterChannel(ctx)
+            refreshSoundLabel()
+        }
 
         interval.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
@@ -50,6 +79,18 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
                     WaterScheduler.schedule(ctx)
                 }
                 refreshStatus()
+            }
+        })
+
+        goal.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, st: Int, c: Int, a: Int) {}
+            override fun onTextChanged(s: CharSequence?, st: Int, b: Int, c: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                if (suppressListeners) return
+                val n = goal.text.toString().toIntOrNull() ?: return
+                if (n < 1) return
+                WaterPrefs.setDailyGoal(ctx, n)
+                refreshHero()
             }
         })
 
@@ -74,6 +115,7 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
                 WaterScheduler.cancel(ctx)
                 WaterScheduler.schedule(ctx)
             }
+            refreshHero()
             refreshStatus()
         }
 
@@ -89,7 +131,17 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
                 WaterScheduler.cancel(ctx)
                 WaterScheduler.schedule(ctx)
             }
+            refreshHero()
             refreshStatus()
+        }
+
+        pickSound.setOnClickListener {
+            val intent = SoundPicker.buildIntent(
+                ctx,
+                WaterPrefs.getSoundUri(ctx),
+                getString(R.string.picker_title_water)
+            )
+            soundPickerLauncher.launch(intent)
         }
     }
 
@@ -98,9 +150,24 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
         val ctx = requireContext()
         suppressListeners = true
         interval.setText(WaterPrefs.getIntervalMinutes(ctx).toString())
+        goal.setText(WaterPrefs.getDailyGoal(ctx).toString())
         enableSwitch.isChecked = WaterPrefs.isEnabled(ctx)
         suppressListeners = false
+        refreshHero()
         refreshStatus()
+        refreshSoundLabel()
+    }
+
+    private fun refreshHero() {
+        val ctx = requireContext()
+        val ml = WaterPrefs.getTodayMl(ctx)
+        val dailyGoal = WaterPrefs.getDailyGoal(ctx)
+        val glasses = ml / WaterPrefs.GLASS_ML
+        heroMl.text = "$ml ml"
+        heroGlasses.text = getString(R.string.water_today_glasses, glasses)
+        goalSummary.text = getString(R.string.water_goal_progress, ml, dailyGoal)
+        val pct = if (dailyGoal <= 0) 0 else ((ml.toLong() * 100L) / dailyGoal).toInt().coerceIn(0, 100)
+        progress.setProgressCompat(pct, true)
     }
 
     private fun refreshStatus() {
@@ -114,8 +181,10 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
         } else {
             status.setText(R.string.water_off)
         }
-        val ml = WaterPrefs.getTodayMl(ctx)
-        val glasses = ml / WaterPrefs.GLASS_ML
-        intake.text = getString(R.string.water_intake_format, glasses, ml)
+    }
+
+    private fun refreshSoundLabel() {
+        val ctx = requireContext()
+        soundName.text = SoundPicker.displayName(ctx, WaterPrefs.getSoundUri(ctx))
     }
 }

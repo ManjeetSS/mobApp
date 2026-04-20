@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 
-/** Fires when the water alarm triggers; posts a "time to drink water" notification. */
 class WaterReminderReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_FIRE = "com.example.mobapp.WATER_FIRE"
@@ -37,7 +36,9 @@ class WaterReminderReceiver : BroadcastReceiver() {
             .setSmallIcon(R.drawable.ic_tab_water)
             .setContentTitle(context.getString(R.string.water_notif_title))
             .setContentText(context.getString(R.string.water_notif_text, intervalMin))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
             .setContentIntent(tapPi)
             .addAction(
@@ -50,7 +51,6 @@ class WaterReminderReceiver : BroadcastReceiver() {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(NOTIF_ID, notif)
 
-        // Chain the next alarm if still enabled.
         if (WaterPrefs.isEnabled(context)) WaterScheduler.schedule(context)
     }
 }
