@@ -39,15 +39,17 @@ class HabitsAdapter(
         private val lastDone: TextView = v.findViewById(R.id.habitLastDone)
         private val enable: SwitchMaterial = v.findViewById(R.id.habitEnableSwitch)
         private val doneBtn: MaterialButton = v.findViewById(R.id.habitDoneButton)
+        private val chart: SimpleBarChartView = v.findViewById(R.id.habitChart)
 
         fun bind(h: Habit) {
+            val ctx = itemView.context
             name.text = h.name
-            interval.text = itemView.context.getString(R.string.habit_interval_fmt, h.intervalMinutes)
+            interval.text = ctx.getString(R.string.habit_interval_fmt, h.intervalMinutes)
             lastDone.text = if (h.lastDoneAt == 0L) {
-                itemView.context.getString(R.string.habit_last_done_never)
+                ctx.getString(R.string.habit_last_done_never)
             } else {
-                val when_ = DateFormat.getTimeFormat(itemView.context).format(Date(h.lastDoneAt))
-                itemView.context.getString(R.string.habit_last_done_at, when_)
+                val when_ = DateFormat.getTimeFormat(ctx).format(Date(h.lastDoneAt))
+                ctx.getString(R.string.habit_last_done_at, when_)
             }
 
             // Avoid re-firing listener during bind.
@@ -56,6 +58,20 @@ class HabitsAdapter(
             enable.setOnCheckedChangeListener { _, checked -> onToggle(h, checked) }
 
             doneBtn.setOnClickListener { onDone(h) }
+
+            chart.barColor = androidx.core.content.ContextCompat.getColor(ctx, R.color.brand_habits)
+            chart.trackColor = 0x22888888
+            chart.labelColor = ctx.resolveThemeColor(
+                android.R.attr.textColorPrimary, 0xDD000000.toInt()
+            )
+            val entries = HabitHistory.lastNDays(ctx, h.id, 7).map { (day, count) ->
+                SimpleBarChartView.Entry(
+                    label = DailyStats.shortLabel(day),
+                    value = count.toFloat(),
+                    valueLabel = count.toString()
+                )
+            }
+            chart.setEntries(entries)
         }
     }
 }

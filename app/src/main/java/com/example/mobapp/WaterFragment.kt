@@ -33,6 +33,7 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
     private lateinit var logCustomButton: MaterialButton
     private lateinit var soundName: TextView
     private lateinit var pickSound: MaterialButton
+    private lateinit var chart: SimpleBarChartView
     private var suppressListeners = false
 
     private lateinit var soundPickerLauncher: ActivityResultLauncher<Intent>
@@ -55,6 +56,12 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
         logCustomButton = view.findViewById(R.id.waterLogCustom)
         soundName = view.findViewById(R.id.waterSoundName)
         pickSound = view.findViewById(R.id.waterPickSound)
+        chart = view.findViewById(R.id.waterChart)
+        chart.barColor = androidx.core.content.ContextCompat.getColor(ctx, R.color.brand_water)
+        chart.trackColor = 0x22888888
+        chart.labelColor = ctx.resolveThemeColor(
+            android.R.attr.textColorPrimary, 0xDD000000.toInt()
+        )
 
         soundPickerLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -117,6 +124,7 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
             }
             refreshHero()
             refreshStatus()
+            refreshChart()
         }
 
         logCustomButton.setOnClickListener {
@@ -133,6 +141,7 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
             }
             refreshHero()
             refreshStatus()
+            refreshChart()
         }
 
         pickSound.setOnClickListener {
@@ -156,6 +165,20 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
         refreshHero()
         refreshStatus()
         refreshSoundLabel()
+        refreshChart()
+    }
+
+    private fun refreshChart() {
+        val ctx = requireContext()
+        val entries = WaterHistory.lastNDays(ctx, 7).map { (day, ml) ->
+            val glasses = ml / WaterPrefs.GLASS_ML
+            SimpleBarChartView.Entry(
+                label = DailyStats.shortLabel(day),
+                value = glasses.toFloat(),
+                valueLabel = glasses.toString()
+            )
+        }
+        chart.setEntries(entries)
     }
 
     private fun refreshHero() {

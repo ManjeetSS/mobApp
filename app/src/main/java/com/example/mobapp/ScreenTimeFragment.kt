@@ -25,7 +25,17 @@ class ScreenTimeFragment : Fragment(R.layout.fragment_screen_time) {
     private lateinit var unitToggle: MaterialButtonToggleGroup
     private lateinit var soundName: TextView
     private lateinit var pickSound: MaterialButton
+    private lateinit var todayValue: TextView
+    private lateinit var chart: SimpleBarChartView
     private var suppressListeners = false
+    private val refreshHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val liveRefresh = object : Runnable {
+        override fun run() {
+            refreshTodayAndChart()
+            // Re-post while the fragment is visible so the live counter ticks forward.
+            refreshHandler.postDelayed(this, 60_000L)
+        }
+    }
 
     private lateinit var soundPickerLauncher: ActivityResultLauncher<Intent>
 
@@ -40,6 +50,13 @@ class ScreenTimeFragment : Fragment(R.layout.fragment_screen_time) {
         unitToggle = view.findViewById(R.id.unitToggle)
         soundName = view.findViewById(R.id.screenSoundName)
         pickSound = view.findViewById(R.id.screenPickSound)
+        todayValue = view.findViewById(R.id.screenTodayValue)
+        chart = view.findViewById(R.id.screenChart)
+        chart.barColor = androidx.core.content.ContextCompat.getColor(ctx, R.color.brand_indigo)
+        chart.trackColor = 0x22888888
+        chart.labelColor = ctx.resolveThemeColor(
+            android.R.attr.textColorPrimary, 0xDD000000.toInt()
+        )
 
         soundPickerLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
@@ -110,6 +127,46 @@ class ScreenTimeFragment : Fragment(R.layout.fragment_screen_time) {
         suppressListeners = false
         refreshStatus()
         refreshSoundLabel()
+        refreshTodayAndChart()
+        // Start the live ticker (updates the "Today" number every minute).
+        refreshHandler.removeCallbacks(liveRefresh)
+        refreshHandler.postDelayed(liveRefresh, 60_000L)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        refreshHandler.removeCallbacks(liveRefresh)
+    }
+
+    private fun refreshTodayAndChart() {
+        val ctx = context ?: return
+        val todayMs = ScreenHistory.getMsTodayWithLive(ctx)
+        todayValue.text = formatDuration(todayMs)
+
+        val entries = ScreenHistory.lastNDaysWithLive(ctx, 7).map { (day, ms) ->
+            val minutes = (ms / 60000L).toInt()
+            SimpleBarChartView.Entry(
+                label = DailyStats.shortLabel(day),
+                value = minutes.toFloat(),
+                valueLabel = formatShortDuration(ms)
+            )
+        }
+        chart.setEntries(entries)
+    }
+
+    private fun formatDuration(ms: Long): String {
+        val totalMin = (ms / 60000L).toInt()
+        val h = totalMin / 60
+        val m = totalMin % 60
+        return if (h > 0) getString(R.string.duration_h_m, h, m)
+        else getString(R.string.duration_m, m)
+    }
+
+    private fun formatShortDuration(ms: Long): String {
+        val totalMin = (ms / 60000L).toInt()
+        val h = totalMin / 60
+        val m = totalMin % 60
+        return if (h > 0) "${h}h" else "${m}m"
     }
 
     private fun onThresholdChanged() {

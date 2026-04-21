@@ -17,6 +17,7 @@ class HabitDoneReceiver : BroadcastReceiver() {
         val habit = HabitsStore.get(context, id) ?: return
 
         HabitsStore.update(context, habit.copy(lastDoneAt = System.currentTimeMillis()))
+        HabitHistory.recordDone(context, habit.id)
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.cancel(habit.id)

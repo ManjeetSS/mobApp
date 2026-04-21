@@ -48,6 +48,7 @@ object WaterPrefs {
         val p = prefs(ctx)
         val existing = if (p.getString(KEY_DATE, null) == today()) p.getInt(KEY_ML, 0) else 0
         p.edit().putString(KEY_DATE, today()).putInt(KEY_ML, existing + ml).apply()
+        WaterHistory.addMl(ctx, ml)
     }
 
     fun getNextAlarmAt(ctx: Context): Long = prefs(ctx).getLong(KEY_NEXT_AT, 0L)

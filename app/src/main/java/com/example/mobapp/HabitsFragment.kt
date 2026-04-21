@@ -46,6 +46,7 @@ class HabitsFragment : Fragment(R.layout.fragment_habits) {
             onDone = { habit ->
                 val updated = habit.copy(lastDoneAt = System.currentTimeMillis())
                 HabitsStore.update(ctx, updated)
+                HabitHistory.recordDone(ctx, habit.id)
                 HabitScheduler.cancel(ctx, habit.id)
                 if (updated.enabled) HabitScheduler.schedule(ctx, updated)
                 (ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)

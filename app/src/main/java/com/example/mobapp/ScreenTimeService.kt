@@ -46,9 +46,31 @@ class ScreenTimeService : Service() {
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
-                Intent.ACTION_SCREEN_ON -> startTimer()
-                Intent.ACTION_SCREEN_OFF -> cancelTimer()
+                Intent.ACTION_SCREEN_ON -> {
+                    beginSession()
+                    startTimer()
+                }
+                Intent.ACTION_SCREEN_OFF -> {
+                    cancelTimer()
+                    endSession()
+                }
             }
+        }
+    }
+
+    private fun beginSession() {
+        // If there's already a session start recorded, don't overwrite (avoids losing
+        // accumulated time on spurious ACTION_SCREEN_ON after reboots/restarts).
+        if (ScreenHistory.getSessionStart(this) <= 0L) {
+            ScreenHistory.setSessionStart(this, System.currentTimeMillis())
+        }
+    }
+
+    private fun endSession() {
+        val start = ScreenHistory.getSessionStart(this)
+        if (start > 0L) {
+            ScreenHistory.addSession(this, start, System.currentTimeMillis())
+            ScreenHistory.setSessionStart(this, 0L)
         }
     }
 
@@ -63,7 +85,10 @@ class ScreenTimeService : Service() {
         }
         registerReceiver(screenReceiver, filter)
 
-        if (isScreenOn()) startTimer()
+        if (isScreenOn()) {
+            beginSession()
+            startTimer()
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -76,6 +101,9 @@ class ScreenTimeService : Service() {
 
     override fun onDestroy() {
         cancelTimer()
+        // Flush any in-flight session so we don't lose the in-progress minutes if the
+        // service is stopped while the screen is still on.
+        endSession()
         runCatching { unregisterReceiver(screenReceiver) }
         super.onDestroy()
     }
