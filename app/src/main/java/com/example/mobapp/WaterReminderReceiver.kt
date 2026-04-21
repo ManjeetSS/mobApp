@@ -19,8 +19,12 @@ class WaterReminderReceiver : BroadcastReceiver() {
 
         val intervalMin = WaterPrefs.getIntervalMinutes(context)
 
+        val tapIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_WATER)
+        }
         val tapPi = PendingIntent.getActivity(
-            context, 0, Intent(context, MainActivity::class.java),
+            context, 2001, tapIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val donePi = PendingIntent.getBroadcast(

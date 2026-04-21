@@ -132,10 +132,13 @@ class ScreenTimeService : Service() {
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
         val tapIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_SCREEN)
         }
         val pi = PendingIntent.getActivity(
-            this, 0, tapIntent,
+            this, 1001, tapIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -180,9 +183,12 @@ class ScreenTimeService : Service() {
     }
 
     private fun buildOngoingNotification(): android.app.Notification {
-        val tapIntent = Intent(this, MainActivity::class.java)
+        val tapIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_SCREEN)
+        }
         val pi = PendingIntent.getActivity(
-            this, 0, tapIntent,
+            this, 1002, tapIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         return NotificationCompat.Builder(this, ONGOING_CHANNEL)

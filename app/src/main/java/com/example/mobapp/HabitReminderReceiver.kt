@@ -22,9 +22,15 @@ class HabitReminderReceiver : BroadcastReceiver() {
 
         NotifChannels.ensureAll(context)
 
+        val tapIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_HABITS)
+        }
+        // Habit PendingIntents are per-habit-id (so each habit's notification keeps
+        // its own tap target); offset by 3000 to avoid colliding with the water/screen
+        // request codes.
         val tapPi = PendingIntent.getActivity(
-            context, id,
-            Intent(context, MainActivity::class.java),
+            context, 3000 + id, tapIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val donePi = PendingIntent.getBroadcast(
