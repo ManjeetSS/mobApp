@@ -1,5 +1,6 @@
 package com.example.mobapp
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -94,7 +95,7 @@ object NotifChannels {
         vibrationPattern = VIBRATION
         setSound(sound, ALARM_AUDIO)
         setBypassDnd(false)
-        lockscreenVisibility = NotificationManager.VISIBILITY_PUBLIC
+        lockscreenVisibility = Notification.VISIBILITY_PUBLIC
     }
 
     fun defaultAlarm(): Uri =
