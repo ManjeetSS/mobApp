@@ -12,6 +12,10 @@
     <string name="trend_subtitle_water">Glasses of water per day</string>
     <string name="trend_subtitle_screen">Hours of screen time per day</string>
     <string name="trend_subtitle_habit">Completions per day</string>
+    <string name="insights_title">Insights</string>
+    <string name="insights_subtitle_water">What your hydration looked like this week</string>
+    <string name="insights_subtitle_screen">What your screen usage looked like this week</string>
+    <string name="insights_subtitle_habit">What your completions looked like this week</string>
     <string name="screen_today">Screen time today</string>
     <string name="screen_today_value">%1$s</string>
     <string name="duration_h_m">%1$dh %2$dm</string>

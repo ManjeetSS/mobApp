@@ -40,6 +40,7 @@ class HabitsAdapter(
         private val enable: SwitchMaterial = v.findViewById(R.id.habitEnableSwitch)
         private val doneBtn: MaterialButton = v.findViewById(R.id.habitDoneButton)
         private val chart: SimpleBarChartView = v.findViewById(R.id.habitChart)
+        private val insights: TextView = v.findViewById(R.id.habitInsights)
 
         fun bind(h: Habit) {
             val ctx = itemView.context
@@ -64,7 +65,8 @@ class HabitsAdapter(
             chart.labelColor = ctx.resolveThemeColor(
                 android.R.attr.textColorPrimary, 0xDD000000.toInt()
             )
-            val entries = HabitHistory.lastNDays(ctx, h.id, 7).map { (day, count) ->
+            val raw = HabitHistory.lastNDays(ctx, h.id, 7)
+            val entries = raw.map { (day, count) ->
                 SimpleBarChartView.Entry(
                     label = DailyStats.shortLabel(day),
                     value = count.toFloat(),
@@ -72,6 +74,19 @@ class HabitsAdapter(
                 )
             }
             chart.setEntries(entries)
+
+            val labels = raw.map { (day, _) -> DailyStats.shortLabel(day) }
+            val values = raw.map { (_, count) -> count.toDouble() }
+            val lines = Insights.summarize(
+                labels = labels,
+                values = values,
+                noun = "completions",
+                formatValue = { v ->
+                    val n = v.toInt()
+                    if (n == 1) "1 completion" else "$n completions"
+                }
+            )
+            insights.text = Insights.asBulletText(lines)
         }
     }
 }

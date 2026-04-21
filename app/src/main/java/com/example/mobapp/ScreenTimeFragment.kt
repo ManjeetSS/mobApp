@@ -27,6 +27,7 @@ class ScreenTimeFragment : Fragment(R.layout.fragment_screen_time) {
     private lateinit var pickSound: MaterialButton
     private lateinit var todayValue: TextView
     private lateinit var chart: SimpleBarChartView
+    private lateinit var insights: TextView
     private var suppressListeners = false
     private val refreshHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private val liveRefresh = object : Runnable {
@@ -52,6 +53,7 @@ class ScreenTimeFragment : Fragment(R.layout.fragment_screen_time) {
         pickSound = view.findViewById(R.id.screenPickSound)
         todayValue = view.findViewById(R.id.screenTodayValue)
         chart = view.findViewById(R.id.screenChart)
+        insights = view.findViewById(R.id.screenInsights)
         chart.barColor = androidx.core.content.ContextCompat.getColor(ctx, R.color.brand_indigo)
         chart.trackColor = 0x22888888
         chart.labelColor = ctx.resolveThemeColor(
@@ -143,7 +145,8 @@ class ScreenTimeFragment : Fragment(R.layout.fragment_screen_time) {
         val todayMs = ScreenHistory.getMsTodayWithLive(ctx)
         todayValue.text = formatDuration(todayMs)
 
-        val entries = ScreenHistory.lastNDaysWithLive(ctx, 7).map { (day, ms) ->
+        val raw = ScreenHistory.lastNDaysWithLive(ctx, 7)
+        val entries = raw.map { (day, ms) ->
             val minutes = (ms / 60000L).toInt()
             SimpleBarChartView.Entry(
                 label = DailyStats.shortLabel(day),
@@ -152,6 +155,22 @@ class ScreenTimeFragment : Fragment(R.layout.fragment_screen_time) {
             )
         }
         chart.setEntries(entries)
+
+        val labels = raw.map { (day, _) -> DailyStats.shortLabel(day) }
+        // Work in minutes-as-double so the summarizer's percent math is well-defined.
+        val values = raw.map { (_, ms) -> ms.toDouble() / 60000.0 }
+        val lines = Insights.summarize(
+            labels = labels,
+            values = values,
+            noun = "screen-time data",
+            formatValue = { v ->
+                val totalMin = v.toInt()
+                val h = totalMin / 60
+                val m = totalMin % 60
+                if (h > 0) "${h}h ${m}m" else "${m}m"
+            }
+        )
+        insights.text = Insights.asBulletText(lines)
     }
 
     private fun formatDuration(ms: Long): String {

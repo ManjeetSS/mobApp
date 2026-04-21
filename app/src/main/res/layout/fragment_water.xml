@@ -129,6 +129,46 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Insights -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="?attr/colorOutlineVariant">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/insights_title"
+                    android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:alpha="0.75"
+                    android:text="@string/insights_subtitle_water"
+                    android:textAppearance="?attr/textAppearanceBodySmall" />
+
+                <TextView
+                    android:id="@+id/waterInsights"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:lineSpacingExtra="4dp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    tools:text="• Most activity on Thu (10 glasses).\n• Trending up — recent days 40% above earlier in the week." />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Log a drink -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"

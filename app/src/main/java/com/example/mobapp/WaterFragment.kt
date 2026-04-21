@@ -34,6 +34,7 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
     private lateinit var soundName: TextView
     private lateinit var pickSound: MaterialButton
     private lateinit var chart: SimpleBarChartView
+    private lateinit var insights: TextView
     private var suppressListeners = false
 
     private lateinit var soundPickerLauncher: ActivityResultLauncher<Intent>
@@ -57,6 +58,7 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
         soundName = view.findViewById(R.id.waterSoundName)
         pickSound = view.findViewById(R.id.waterPickSound)
         chart = view.findViewById(R.id.waterChart)
+        insights = view.findViewById(R.id.waterInsights)
         chart.barColor = androidx.core.content.ContextCompat.getColor(ctx, R.color.brand_water)
         chart.trackColor = 0x22888888
         chart.labelColor = ctx.resolveThemeColor(
@@ -170,7 +172,8 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
 
     private fun refreshChart() {
         val ctx = requireContext()
-        val entries = WaterHistory.lastNDays(ctx, 7).map { (day, ml) ->
+        val raw = WaterHistory.lastNDays(ctx, 7)
+        val entries = raw.map { (day, ml) ->
             val glasses = ml / WaterPrefs.GLASS_ML
             SimpleBarChartView.Entry(
                 label = DailyStats.shortLabel(day),
@@ -179,6 +182,19 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
             )
         }
         chart.setEntries(entries)
+
+        val labels = raw.map { (day, _) -> DailyStats.shortLabel(day) }
+        val values = raw.map { (_, ml) -> (ml.toDouble() / WaterPrefs.GLASS_ML) }
+        val lines = Insights.summarize(
+            labels = labels,
+            values = values,
+            noun = "hydration data",
+            formatValue = { v ->
+                val g = v.toInt()
+                if (g == 1) "1 glass" else "$g glasses"
+            }
+        )
+        insights.text = Insights.asBulletText(lines)
     }
 
     private fun refreshHero() {
