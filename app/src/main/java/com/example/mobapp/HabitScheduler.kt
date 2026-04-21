@@ -12,8 +12,9 @@ object HabitScheduler {
         if (!habit.enabled) return
         val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val triggerAt = System.currentTimeMillis() + habit.intervalMinutes.toLong() * 60L * 1000L
-        val info = AlarmManager.AlarmClockInfo(triggerAt, showIntent(ctx, habit.id))
-        am.setAlarmClock(info, reminderPi(ctx, habit.id))
+        AlarmSchedulingCompat.scheduleBest(
+            am, triggerAt, reminderPi(ctx, habit.id), showIntent(ctx, habit.id)
+        )
     }
 
     fun cancel(ctx: Context, habitId: Int) {

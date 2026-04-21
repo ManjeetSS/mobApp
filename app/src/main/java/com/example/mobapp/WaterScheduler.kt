@@ -6,9 +6,11 @@ import android.content.Context
 import android.content.Intent
 
 /**
- * Schedules the water reminder using [AlarmManager.setAlarmClock] — the most reliable
- * AlarmManager API. Bypasses doze mode, surfaces an alarm icon in the status bar, and
- * does not require the SCHEDULE_EXACT_ALARM permission.
+ * Schedules the water reminder. Prefers [AlarmManager.setAlarmClock] (exact, shows an
+ * alarm icon, bypasses doze) when the app is allowed to schedule exact alarms; otherwise
+ * falls back to [AlarmManager.setAndAllowWhileIdle], which is inexact but needs no
+ * permission. On Android 12+ (API 31) exact alarms require SCHEDULE_EXACT_ALARM, which we
+ * do not request — the inexact fallback is fine for an hourly reminder.
  */
 object WaterScheduler {
     private const val REQ_FIRE = 9001
@@ -18,8 +20,7 @@ object WaterScheduler {
         val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intervalMs = WaterPrefs.getIntervalMinutes(ctx).toLong() * 60L * 1000L
         val triggerAt = System.currentTimeMillis() + intervalMs
-        val info = AlarmManager.AlarmClockInfo(triggerAt, showIntent(ctx))
-        am.setAlarmClock(info, fireIntent(ctx))
+        AlarmSchedulingCompat.scheduleBest(am, triggerAt, fireIntent(ctx), showIntent(ctx))
         WaterPrefs.setNextAlarmAt(ctx, triggerAt)
     }
 
