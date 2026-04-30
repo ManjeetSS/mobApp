@@ -1,12 +1,15 @@
 package com.example.mobapp
 
 import android.app.Activity
+import android.app.NotificationManager
 import android.content.Intent
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.text.format.DateFormat
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -120,6 +123,7 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
 
         glassButton.setOnClickListener {
             WaterPrefs.logMl(ctx, WaterPrefs.GLASS_ML)
+            dismissActiveReminder(ctx)
             if (WaterPrefs.isEnabled(ctx)) {
                 WaterScheduler.cancel(ctx)
                 WaterScheduler.schedule(ctx)
@@ -137,6 +141,10 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
             }
             WaterPrefs.logMl(ctx, ml)
             customMl.setText("")
+            customMl.clearFocus()
+            val imm = ctx.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            imm?.hideSoftInputFromWindow(customMl.windowToken, 0)
+            dismissActiveReminder(ctx)
             if (WaterPrefs.isEnabled(ctx)) {
                 WaterScheduler.cancel(ctx)
                 WaterScheduler.schedule(ctx)
@@ -174,25 +182,21 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
         val ctx = requireContext()
         val raw = WaterHistory.lastNDays(ctx, 7)
         val entries = raw.map { (day, ml) ->
-            val glasses = ml / WaterPrefs.GLASS_ML
             SimpleBarChartView.Entry(
                 label = DailyStats.shortLabel(day),
-                value = glasses.toFloat(),
-                valueLabel = glasses.toString()
+                value = ml.toFloat(),
+                valueLabel = "$ml ml"
             )
         }
         chart.setEntries(entries)
 
         val labels = raw.map { (day, _) -> DailyStats.shortLabel(day) }
-        val values = raw.map { (_, ml) -> (ml.toDouble() / WaterPrefs.GLASS_ML) }
+        val values = raw.map { (_, ml) -> ml.toDouble() }
         val lines = Insights.summarize(
             labels = labels,
             values = values,
             noun = "hydration data",
-            formatValue = { v ->
-                val g = v.toInt()
-                if (g == 1) "1 glass" else "$g glasses"
-            }
+            formatValue = { v -> "${v.toInt()} ml" }
         )
         insights.text = Insights.asBulletText(lines)
     }
@@ -220,6 +224,11 @@ class WaterFragment : Fragment(R.layout.fragment_water) {
         } else {
             status.setText(R.string.water_off)
         }
+    }
+
+    private fun dismissActiveReminder(ctx: Context) {
+        val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        nm?.cancel(WaterReminderReceiver.NOTIF_ID)
     }
 
     private fun refreshSoundLabel() {
