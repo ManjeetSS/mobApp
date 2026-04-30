@@ -89,4 +89,6 @@
     <string name="habit_notif_text">Did you complete this habit?</string>
     <string name="habit_notif_action">Mark done</string>
     <string name="habit_deleted">Deleted %1$s</string>
+    <string name="habit_delete_confirm_title">Delete habit?</string>
+    <string name="habit_delete_confirm_msg">\"%1$s\" will be removed along with its reminders.</string>
 </resources>

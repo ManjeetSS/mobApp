@@ -89,7 +89,7 @@ class HabitsFragment : Fragment(R.layout.fragment_habits) {
                 val pos = vh.bindingAdapterPosition
                 if (pos == RecyclerView.NO_POSITION) return
                 val habit = adapter.itemAt(pos)
-                deleteWithUndo(ctx, habit, pos)
+                confirmDelete(ctx, habit, pos)
             }
 
             override fun onChildDraw(
@@ -129,6 +129,22 @@ class HabitsFragment : Fragment(R.layout.fragment_habits) {
             }
         }
         ItemTouchHelper(callback).attachToRecyclerView(list)
+    }
+
+    private fun confirmDelete(ctx: Context, habit: Habit, originalPosition: Int) {
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle(R.string.habit_delete_confirm_title)
+            .setMessage(getString(R.string.habit_delete_confirm_msg, habit.name))
+            .setNegativeButton(R.string.cancel) { _, _ ->
+                adapter.notifyItemChanged(originalPosition)
+            }
+            .setPositiveButton(R.string.habit_delete) { _, _ ->
+                deleteWithUndo(ctx, habit, originalPosition)
+            }
+            .setOnCancelListener {
+                adapter.notifyItemChanged(originalPosition)
+            }
+            .show()
     }
 
     private fun deleteWithUndo(ctx: Context, habit: Habit, originalPosition: Int) {
